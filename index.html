@@ -936,6 +936,18 @@
         </div>
       </div>
 
+    </div>
+
+    <div class="idea rv">
+      <span class="tag">Idea 09</span>
+      <h3>The craft walks onto the pitch.</h3>
+      <p class="body">Gujarat's hands have been embroidering for centuries — Kutchi mirror-work, bandhani, gota. It belongs on the team that carries the state's name. <b>Artisanal emblems on the players' shoes and the GT kit:</b> matchday boots trimmed by real Kutch artisans, bandhani woven into the jersey's detailing, each piece signed by the craftsperson who made it.</p>
+      <p class="body">Every camera close-up becomes a story about Gujarat's craft. The boots get auctioned for the artisans' cooperatives at season's end. No other franchise can wear this — it isn't a design, it's a heritage.</p>
+      <div class="split">
+        <div class="visual tall rv rv-l" data-hover><img src="img/idea-shoes.jpg" alt="Sneakers hand-embroidered with Kutchi mirror-work and gota trim" onerror="this.remove()"/><div class="cap">Matchday boots · Hand-finished by Kutch artisans</div></div>
+        <div class="visual tall rv rv-r" data-hover><img src="img/idea-bandhani.jpg" alt="Bandhani pattern in maroon and gold" onerror="this.remove()"/><div class="cap">Bandhani · Woven into the kit's detailing</div></div>
+      </div>
+
       <div class="bag rv">
         <div class="bag-head">Also in the bag — more, ready to open in the room</div>
         <div class="item" data-hover><b>The Gujarati account</b><span>A second channel entirely in Gujarati, run like a fan page by the Admin.</span></div>
@@ -1063,15 +1075,24 @@
       const dw = iw * scale, dh = ih * scale;
       ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
     } else {
-      // portrait viewport: blurred cover fill behind a full, uncropped frame
-      const cover = Math.max(cw / iw, ch / ih);
-      ctx.save();
-      ctx.filter = `blur(${Math.round(cw * 0.03)}px) brightness(0.55)`;
-      ctx.drawImage(img, (cw - iw * cover) / 2, (ch - ih * cover) / 2, iw * cover, ih * cover);
-      ctx.restore();
+      // portrait viewport: blurred cover fill behind a full, uncropped frame.
+      // ctx.filter is unsupported on iOS Safari, so blur via downscale→upscale
+      // and darken with an overlay rect instead.
+      if (!draw.tiny) {
+        draw.tiny = document.createElement("canvas");
+        draw.tiny.width = 24; draw.tiny.height = 14;
+        draw.tinyCtx = draw.tiny.getContext("2d");
+      }
+      draw.tinyCtx.drawImage(img, 0, 0, 24, 14);
+      const cover = Math.max(cw / 24, ch / 14);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "low";
+      ctx.drawImage(draw.tiny, (cw - 24 * cover) / 2, (ch - 14 * cover) / 2, 24 * cover, 14 * cover);
+      ctx.fillStyle = "rgba(4, 8, 20, 0.55)";
+      ctx.fillRect(0, 0, cw, ch);
       const fit = Math.min(cw / iw, ch / ih);
       const dw = iw * fit, dh = ih * fit;
-      ctx.filter = "none";
+      ctx.imageSmoothingQuality = "high";
       ctx.drawImage(img, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
     }
     lastDrawn = idx;
